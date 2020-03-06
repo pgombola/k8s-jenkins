@@ -9,7 +9,9 @@ pipeline {
     }
 
     stage("deploy") {
-      echo 'deploying yaml configs to k8s'
+      steps {
+        echo 'deploying yaml configs to k8s'
+      }
     }
   }      
 }
