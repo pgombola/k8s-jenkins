@@ -1,7 +1,7 @@
 kind: PersistentVolume
 apiVersion: v1
 metadata:
-  name: cie-share-pv
+  name: {{tenant}}-cie-share-pv
   labels:
     type: local
 spec:
