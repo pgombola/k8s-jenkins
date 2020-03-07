@@ -1,0 +1,17 @@
+  1 pipeline {
+  2   agent any
+  3
+  4   stages {
+  5     stage("template") {
+  6       steps {
+  7         echo 'templating yaml configs'
+  8       }
+  9     }
+ 10
+ 11     stage("deploy") {
+ 12       steps {
+ 13         echo 'deploying yaml configs to k8s'
+ 14       }
+ 15     }
+ 16   }
+ 17 }
