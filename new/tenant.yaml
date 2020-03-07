@@ -1,3 +1,30 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: cie-share-pv
+  labels:
+    type: local
+spec:
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/data/clarify"
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: cie-share-pvc
+  namespace: {{tenant}}-cie
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: cie-share-pv
+  resources:
+    requests:
+      storage: 1Gi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -25,11 +52,11 @@ spec:
         imagePullPolicy: IfNotPresent
         resources:
           requests:
-            memory: '2048Mi'
-            cpu: '1'
+            memory: '512Mi'
+            cpu: '0.5'
           limits:
-            memory: '2048Mi'
-            cpu: '1'
+            memory: '512Mi'
+            cpu: '0.5'
         envFrom:
         - secretRef:
             name: rabbitmq-consumer
@@ -47,7 +74,7 @@ apiVersion: keda.k8s.io/v1alpha1
 kind: ScaledObject
 metadata:
   name: cie
-  namespace: default
+  namespace: {{tenant}}-cie
   labels:
     deploymentName: cie
 spec:
