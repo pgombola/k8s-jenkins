@@ -1,0 +1,5 @@
+resources:
+- odie.yaml
+configMapGenerator:
+- name: queue-config-cm
+  behavior: create
