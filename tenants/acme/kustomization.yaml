@@ -1,8 +1,0 @@
-namespace: acme
-bases:
-  - ../common
-configMapGenerator:
-  - name: queue-config-cm
-    behavior: merge
-    literals:
-     - queue.url="arn://some-queue"
