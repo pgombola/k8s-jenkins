@@ -4,6 +4,7 @@ pipeline {
     stages {
         stage ("Merge pull request") {
             steps {
+                sh 'echo In the stage'
                 withCredentials([usernamePassword(
                     credentialsId: 'credential-value',
                     usernameVariable: 'ACCESS_TOKEN_USERNAME',
