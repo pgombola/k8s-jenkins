@@ -1,11 +1,6 @@
 pipeline {
     agent any
     stages {
-        stage ("Setup") {
-            steps {
-                echo 'setting up...'
-            }
-        }
         stage("Validate tenant") {
             steps {
                 echo 'validating...'
@@ -17,10 +12,8 @@ pipeline {
                     credentialsId: 'pgombola-token',
                     usernameVariable: 'USERNAME',
                     passwordVariable: 'PASSWORD',)]) {
-                    sh "curl -X PUT -i -d '{\"commit_title\": \"Merge pull request\"}' https://api.github.com/repos/pgombola/k8s-jenkins/pulls/$CHANGE_ID/merge -u $USERNAME:$PASSWORD"
                     script {
-                        sh "curl -o - -s -w \"\n%{http_code}\n\" -X PUT -d '{\"commit_title\": \"Merge pull request\"}'  https://github.com/api/v3/repos/pgombola/k8s-jenkins/pulls/$CHANGE_ID/merge?access_token=$ACCESS_TOKEN_PASSWORD | tail -1 > mergeResult.txt"
-
+                        sh "curl -s -o - -s -w \"\n%{http_code}\n\" -X PUT -i -d '{\"commit_title\": \"Merge add tenant\"}' https://api.github.com/repos/pgombola/k8s-jenkins/pulls/$CHANGE_ID/merge -u $USERNAME:$PASSWORD | tail -1 > mergeResult.txt"
                         def mergeResult = readFile('mergeResult.txt').trim()
                         if (mergeResult != "200") {
                             error "Unable to merge!"
