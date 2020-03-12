@@ -14,7 +14,7 @@ TENANT_DIR="${REPO_ROOT}/tenants/${TENANT_NAME}/"
 
 mkdir -p ${TENANT_DIR}
 
-cp -r "${REPO_ROOT}/tenants/${TEMPLATE}/." ${TENANT_DIR}
+cp -r "${REPO_ROOT}/${TEMPLATE}/." ${TENANT_DIR}
 
 for f in ${TENANT_DIR}*.yaml; do 
   echo "Modifying $f"

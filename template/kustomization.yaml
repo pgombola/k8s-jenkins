@@ -1,6 +1,6 @@
 namespace: template
 bases:
-  - ../common
+  - ../../common
 resources:
   - namespace.yaml
 configMapGenerator:
