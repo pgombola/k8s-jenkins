@@ -1,0 +1,12 @@
+namespace: wiley
+bases:
+  - ../../common
+resources:
+  - namespace.yaml
+configMapGenerator:
+  - name: queue-config-cm
+    behavior: merge
+    literals:
+     - queue.url=wiley
+     - queue.length=5
+     
