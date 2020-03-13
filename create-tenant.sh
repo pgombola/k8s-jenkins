@@ -25,10 +25,11 @@ for f in ${TENANT_DIR}*.yaml; do
   fi
 done
 
+echo "Modifying fluxcd patch.yaml"
 if [[ "${OSTYPE}" == "darwin"* ]]; then
-  sed -i '' "s/^.*--git-path.*/& tenants\/$TENANT_NAME/" $REPO_ROOT/cluster/fluxcd/patch.yaml
+  sed -i '' "s/^.*--git-path.*/&,tenants\/$TENANT_NAME/" $REPO_ROOT/cluster/fluxcd/patch.yaml
 else
-  sed -i "s/^.*--git-path.*/& tenants\/$TENANT_NAME/" $REPO_ROOT/cluster/fluxcd/patch.yaml
+  sed -i "s/^.*--git-path.*/&,tenants\/$TENANT_NAME/" $REPO_ROOT/cluster/fluxcd/patch.yaml
 fi
 
 echo "$TENANT_NAME created at ${TENANT_DIR}"
