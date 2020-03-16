@@ -1,5 +1,8 @@
 namespace: flux
 bases:
   - github.com/fluxcd/flux//deploy
+secretGenerator:
+  - name: flux-git-auth
+    env: git.config
 patchesStrategicMerge:
   - patch.yaml

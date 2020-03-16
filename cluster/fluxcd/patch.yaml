@@ -8,6 +8,9 @@ spec:
     spec:
       containers:
         - name: flux
+          envFrom:
+            - secretRef: 
+                name: flux-git-auth
           args:
             - --manifest-generation=true
             - --memcached-hostname=memcached.flux
@@ -15,6 +18,5 @@ spec:
             - --ssh-keygen-dir=/var/fluxd/keygen
             - --git-branch=master
             - --git-path=cluster/fluxcd
-            - --git-user=pgombola
             - --git-email=pgombola@users.noreply.github.com
-            - --git-url=git@github.com:pgombola/k8s-jenkins
+            - --git-url=https://$(GIT_AUTHUSER):$(GIT_AUTHKEY)@github.com/pgombola/k8s-jenkins
