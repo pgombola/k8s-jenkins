@@ -1,10 +1,7 @@
 namespace: flux
 bases:
-  - github.com/fluxcd/flux//deploy
-secretGenerator:
-  - name: flux-git-auth
-    files: 
-      - GIT_AUTHUSER
-      - GIT_AUTHKEY
+  - github.com/fluxcd/flux//deploy?ref=v1.18.0
+resources: 
+  - secret.yaml
 patchesStrategicMerge:
   - patch.yaml
