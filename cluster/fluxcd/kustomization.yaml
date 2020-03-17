@@ -3,6 +3,8 @@ bases:
   - github.com/fluxcd/flux//deploy
 secretGenerator:
   - name: flux-git-auth
-    env: git.config
+    files: 
+      - GIT_AUTHUSER
+      - GIT_AUTHKEY
 patchesStrategicMerge:
   - patch.yaml
