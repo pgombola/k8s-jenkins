@@ -48,14 +48,21 @@ pipeline {
                 script {
                     def tenant = params['Tenant Name']
                     echo "Checking out ${tenant}..."
-                    dir("tenant-${tenant}") {
-                        git (
-                            url: "${GIT_URL}",
-                            credentialsId: 'pgombola-token',
-                            branch: "tenant-${tenant}"
-                        )
-                        sh "./create-tenant.sh ${tenant}"
-                        sh "git add . && git commit -m \"Added tenant ${tenant}\" && git push origin tenant-${tenant}"
+                    withCredentials([usernamePassword(
+                        credentialsId: env.GIT_CREDENTIAL_ID,
+                        usernameVariable: 'USER',
+                        passwordVariable: 'PASS')]) {
+                        script {
+                            env.encodedPass=URLEncoder.encode(PASS, "UTF-8")
+                        }
+                        DIR = "tenant-${tenant}"
+                        sh "git clone https://${USER}:${encodedPass}@${GIT_URL} ${DIR} -b tenant-${tenant}"
+                        dir("${DIR}") {
+                            sh "./create-tenant.sh ${tenant}"
+                            sh 'git add .'
+                            sh "git commit -m \"Added tenant ${tenant}\""
+                            sh 'git push'
+                        }
                     }
                 }
             }
@@ -68,7 +75,7 @@ pipeline {
     }
     post {
         cleanup {
-            cleanWs()
+            deleteDir("tenant-${params['Tenant Name']}")
         }
     }
 }
