@@ -11,8 +11,8 @@ pipeline {
         choice(name: 'Environment', choices: ['prod', 'stage'], description: 'Environment to deploy tenant')
     }
 
-    stages {
-        node() {
+    node() {
+        stages {
             stage("Validate parameters") {
                 steps {
                     script {
