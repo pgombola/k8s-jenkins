@@ -1,14 +1,17 @@
 import groovy.json.JsonOutput
 
 pipeline {
+    agent any
     options {
         buildDiscarder(logRotator(numToKeepStr: '10', artifactNumToKeepStr: '10'))
     }
-    agent any
     parameters {
         string(name: 'Tenant Name', defaultValue: '', description: 'Name of tenant to create')
         choice(name: 'Region', choices: ['us-east-1', 'us-west-2'], description: 'Region to deploy tenant')
         choice(name: 'Environment', choices: ['prod', 'stage'], description: 'Environment to deploy tenant')
+    }
+    environment {
+        GIT_CREDENTIAL_ID='pgombola-token'
     }
 
     stages {
@@ -24,15 +27,15 @@ pipeline {
         stage("Create tenant branch") {
             steps {
                 withCredentials([usernamePassword(
-                    credentialsId: 'pgombola-token',
-                    usernameVariable: 'USERNAME',
-                    passwordVariable: 'PASSWORD',)]) {
+                    credentialsId: env.GIT_CREDENTIAL_ID,
+                    usernameVariable: 'USER',
+                    passwordVariable: 'PASS',)]) {
                     script {
                         def tenantBranch = 'tenant-'+params['Tenant Name']
                         echo "Creating branch ${tenantBranch}"
                         def create = JsonOutput.toJson([ref: "refs/heads/${tenantBranch}", sha: "${GIT_COMMIT}"]).replace("\"", "\\\"")
                         created = sh (
-                            script: "curl -s -o - -i -w \"%{http_code}\" -X POST -d ${create} https://api.github.com/repos/pgombola/k8s-jenkins/git/refs -u $USERNAME:$PASSWORD | tail -1",
+                            script: "curl -s -o - -i -w \"%{http_code}\" -X POST -d ${create} https://api.github.com/repos/pgombola/k8s-jenkins/git/refs -u $USER:$PASS | tail -1",
                             returnStdout: true
                         ).trim() == '201'
                         echo "Branch created: ${created}"
@@ -54,14 +57,14 @@ pipeline {
                         passwordVariable: 'PASS')]) {
                         script {
                             env.encodedPass=URLEncoder.encode(PASS, "UTF-8")
-                        }
-                        DIR = "tenant-${tenant}"
-                        sh "git clone https://${USER}:${encodedPass}@${GIT_URL} ${DIR} -b tenant-${tenant}"
-                        dir("${DIR}") {
-                            sh "./create-tenant.sh ${tenant}"
-                            sh 'git add .'
-                            sh "git commit -m \"Added tenant ${tenant}\""
-                            sh 'git push'
+                            DIR = "tenant-${tenant}"
+                            sh "git clone https://${USER}:${encodedPass}@${GIT_URL} ${DIR} -b tenant-${tenant}"
+                            dir("${DIR}") {
+                                sh "./create-tenant.sh ${tenant}"
+                                sh 'git add .'
+                                sh "git commit -m \"Added tenant ${tenant}\""
+                                sh 'git push'
+                            }
                         }
                     }
                 }
