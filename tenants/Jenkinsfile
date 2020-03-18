@@ -12,66 +12,53 @@ pipeline {
     }
 
     stages {
-        stage("Validate parameters") {
-            steps {
-                script {
-                    if (params['Tenant Name'] == '') {
-                        error 'Invalid tenant name'
-                    }
-                }
-            }
-        }
-
-        stage("Create tenant branch") {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'pgombola-token',
-                    usernameVariable: 'USERNAME',
-                    passwordVariable: 'PASSWORD',)]) {
+        node() {
+            stage("Validate parameters") {
+                steps {
                     script {
-                        def tenantBranch = 'tenant-'+params['Tenant Name']
-                        echo "Creating branch ${tenantBranch}"
-                        def create = JsonOutput.toJson([ref: "refs/heads/${tenantBranch}", sha: "${GIT_COMMIT}"]).replace("\"", "\\\"")
-                        created = sh (
-                            script: "curl -s -o - -i -w \"%{http_code}\" -X POST -d ${create} https://api.github.com/repos/pgombola/k8s-jenkins/git/refs -u $USERNAME:$PASSWORD | tail -1",
-                            returnStdout: true
-                        ).trim() == '201'
-                        echo "Branch created: ${created}"
-                        if (!created) {
-                            error 'Error creating branch'
+                        if (params['Tenant Name'] == '') {
+                            error 'Invalid tenant name'
                         }
                     }
                 }
             }
-        }
-        stage("Configure tenant") {
-            steps {
-                echo 'configuring...'
+
+            stage("Create tenant branch") {
+                steps {
+                    withCredentials([usernamePassword(
+                        credentialsId: 'pgombola-token',
+                        usernameVariable: 'USERNAME',
+                        passwordVariable: 'PASSWORD',)]) {
+                        script {
+                            def tenantBranch = 'tenant-'+params['Tenant Name']
+                            echo "Creating branch ${tenantBranch}"
+                            def create = JsonOutput.toJson([ref: "refs/heads/${tenantBranch}", sha: "${GIT_COMMIT}"]).replace("\"", "\\\"")
+                            created = sh (
+                                script: "curl -s -o - -i -w \"%{http_code}\" -X POST -d ${create} https://api.github.com/repos/pgombola/k8s-jenkins/git/refs -u $USERNAME:$PASSWORD | tail -1",
+                                returnStdout: true
+                            ).trim() == '201'
+                            echo "Branch created: ${created}"
+                            if (!created) {
+                                error 'Error creating branch'
+                            }
+                        }
+                    }
+                }
+            }
+
+            stage("Configure tenant") {
+                steps {
+                    echo "Git url: ${GIT_URL}"
+                    echo "Checking out ${params['Tenant Name']}..."
+
+                }
+            }
+
+            stage("Create PR") {
+                steps {
+                    echo 'creating pr...'
+                }
             }
         }
-        stage("Create PR") {
-            steps {
-                echo 'creating pr...'
-            }
-        }
-        // stage ("Merge pull request") {
-        //     steps {
-        //         withCredentials([usernamePassword(
-        //             credentialsId: 'pgombola-token',
-        //             usernameVariable: 'USERNAME',
-        //             passwordVariable: 'PASSWORD',)]) {
-        //             script {
-        //                 sh "curl -s -o - -s -w \"\n%{http_code}\n\" -X PUT -i -d '{\"commit_title\": \"Merge add tenant\"}' https://api.github.com/repos/pgombola/k8s-jenkins/pulls/$CHANGE_ID/merge -u $USERNAME:$PASSWORD | tail -1 > mergeResult.txt"
-        //                 def mergeResult = readFile('mergeResult.txt').trim()
-        //                 echo "Merge Result: ${mergeResult}"
-        //                 if (mergeResult != "200") {
-        //                     error "Unable to merge!"
-        //                 } else {
-        //                 // Send a Slack message, etc
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
     }
 }
