@@ -19,8 +19,11 @@ pipeline {
 
         stage("Create tenant branch") {
             steps {
-                def tenantBranch = 'tenant-'+params['Tenant Name']
-                echo 'Creating branch $tenantBranch'
+                script {
+                    def tenantBranch = 'tenant-'+params['Tenant Name']
+                    echo 'Creating branch $tenantBranch'
+                }
+
             }
         }
         stage("Configure tenant") {
