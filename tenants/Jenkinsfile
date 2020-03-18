@@ -1,6 +1,9 @@
 import groovy.json.JsonOutput
 
 pipeline {
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10', artifactNumToKeepStr: '10'))
+    }
     agent any
     parameters {
         string(name: 'Tenant Name', defaultValue: '', description: 'Name of tenant to create')
