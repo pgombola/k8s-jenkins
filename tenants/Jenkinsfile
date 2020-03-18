@@ -12,7 +12,7 @@ pipeline {
     }
     environment {
         GIT_CREDENTIAL_ID='pgombola-token'
-        GIT_URL_WITHOUT_HTTPS=GIT_URL.substring(url.indexOf(':'+1))
+        GIT_URL_WITHOUT_HTTPS="${GIT_URL}".substring("${GIT_URL}".indexOf('https://')+8)
     }
 
     stages {
@@ -61,7 +61,7 @@ pipeline {
                             DIR = "tenant-${tenant}"
                             sh "git clone https://${USER}:${encodedPass}@${GIT_URL_WITHOUT_HTTPS} ${DIR} -b tenant-${tenant}"
                             dir("${DIR}") {
-                                sh "./create-tenant.sh ${tenant}"
+                                bash "./create-tenant.sh ${tenant}"
                                 sh 'git add .'
                                 sh "git commit -m \"Added tenant ${tenant}\""
                                 sh 'git push'
@@ -79,8 +79,10 @@ pipeline {
     }
     post {
         cleanup {
-            dir ("tenant-${params['Tenant Name']}") {
-                deleteDir()
+            if (fileExists("tenant-${params['Tenant Name']}")) {
+                dir ("tenant-${params['Tenant Name']}") {
+                    deleteDir()
+                }
             }
         }
     }
