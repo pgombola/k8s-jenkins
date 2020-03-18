@@ -75,7 +75,9 @@ pipeline {
     }
     post {
         cleanup {
-            deleteDir("tenant-${params['Tenant Name']}")
+            dir ("tenant-${params['Tenant Name']}") {
+                deleteDir()
+            }
         }
     }
 }
