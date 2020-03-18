@@ -48,14 +48,15 @@ pipeline {
         stage("Configure tenant") {
             steps {
                 script {
-                    echo "Checking out ${params['Tenant Name']}..."
-                    dir("tenant-${params['Tenant Name']}") {
+                    def tenant = params['Tenant Name']
+                    echo "Checking out ${tenant}..."
+                    dir("tenant-${tenant}") {
                         git (
                             url: "${GIT_URL}",
                             credentialsId: 'pgombola-token',
-                            branch: "tenant-${params['Tenant Name']}"
+                            branch: "tenant-${tenant}"
                         )
-                        sh "ls"
+                        sh "./create-tenant.sh acme && git add . && git commit -m \"Added tenant ${tenant}\""
                     }
                 }
             }
