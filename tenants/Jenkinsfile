@@ -21,7 +21,6 @@ pipeline {
                 }
             }
         }
-
         stage("Create tenant branch") {
             steps {
                 withCredentials([usernamePassword(
@@ -44,7 +43,6 @@ pipeline {
                 }
             }
         }
-
         stage("Configure tenant") {
             steps {
                 script {
@@ -55,20 +53,19 @@ pipeline {
                             url: "${GIT_URL}",
                             credentialsId: 'pgombola-token',
                             branch: "tenant-${tenant}"
-                        )
-                        sh "./create-tenant.sh acme && git add . && git commit -m \"Added tenant ${tenant}\""
+                        ) {
+                            sh "./create-tenant.sh acme && git add . && git commit -m \"Added tenant ${tenant}\""
+                        }
                     }
                 }
             }
         }
-
         stage("Create PR") {
             steps {
                 echo 'creating pr...'
             }
         }
     }
-
     post {
         cleanup {
             cleanWs()
