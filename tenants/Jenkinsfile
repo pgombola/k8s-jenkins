@@ -5,6 +5,7 @@ pipeline {
         choice(name: 'Region', choices: ['us-east-1', 'us-west-2'], description: 'Region to deploy tenant')
         choice(name: 'Environment', choices: ['prod', 'stage'], description: 'Environment to deploy tenant')
     }
+
     stages {
         stage("Validate parameters") {
             steps {
@@ -18,7 +19,8 @@ pipeline {
 
         stage("Create tenant branch") {
             steps {
-                echo 'validating...'
+                def tenantBranch = 'tenant-'+params['Tenant Name']
+                echo 'Creating branch $tenantBranch'
             }
         }
         stage("Configure tenant") {
