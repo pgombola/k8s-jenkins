@@ -11,53 +11,51 @@ pipeline {
         choice(name: 'Environment', choices: ['prod', 'stage'], description: 'Environment to deploy tenant')
     }
 
-    node() {
-        stages {
-            stage("Validate parameters") {
-                steps {
+    stages {
+        stage("Validate parameters") {
+            steps {
+                script {
+                    if (params['Tenant Name'] == '') {
+                        error 'Invalid tenant name'
+                    }
+                }
+            }
+        }
+
+        stage("Create tenant branch") {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'pgombola-token',
+                    usernameVariable: 'USERNAME',
+                    passwordVariable: 'PASSWORD',)]) {
                     script {
-                        if (params['Tenant Name'] == '') {
-                            error 'Invalid tenant name'
+                        def tenantBranch = 'tenant-'+params['Tenant Name']
+                        echo "Creating branch ${tenantBranch}"
+                        def create = JsonOutput.toJson([ref: "refs/heads/${tenantBranch}", sha: "${GIT_COMMIT}"]).replace("\"", "\\\"")
+                        created = sh (
+                            script: "curl -s -o - -i -w \"%{http_code}\" -X POST -d ${create} https://api.github.com/repos/pgombola/k8s-jenkins/git/refs -u $USERNAME:$PASSWORD | tail -1",
+                            returnStdout: true
+                        ).trim() == '201'
+                        echo "Branch created: ${created}"
+                        if (!created) {
+                            error 'Error creating branch'
                         }
                     }
                 }
             }
+        }
 
-            stage("Create tenant branch") {
-                steps {
-                    withCredentials([usernamePassword(
-                        credentialsId: 'pgombola-token',
-                        usernameVariable: 'USERNAME',
-                        passwordVariable: 'PASSWORD',)]) {
-                        script {
-                            def tenantBranch = 'tenant-'+params['Tenant Name']
-                            echo "Creating branch ${tenantBranch}"
-                            def create = JsonOutput.toJson([ref: "refs/heads/${tenantBranch}", sha: "${GIT_COMMIT}"]).replace("\"", "\\\"")
-                            created = sh (
-                                script: "curl -s -o - -i -w \"%{http_code}\" -X POST -d ${create} https://api.github.com/repos/pgombola/k8s-jenkins/git/refs -u $USERNAME:$PASSWORD | tail -1",
-                                returnStdout: true
-                            ).trim() == '201'
-                            echo "Branch created: ${created}"
-                            if (!created) {
-                                error 'Error creating branch'
-                            }
-                        }
-                    }
-                }
+        stage("Configure tenant") {
+            steps {
+                echo "Git url: ${GIT_URL}"
+                echo "Checking out ${params['Tenant Name']}..."
+
             }
+        }
 
-            stage("Configure tenant") {
-                steps {
-                    echo "Git url: ${GIT_URL}"
-                    echo "Checking out ${params['Tenant Name']}..."
-
-                }
-            }
-
-            stage("Create PR") {
-                steps {
-                    echo 'creating pr...'
-                }
+        stage("Create PR") {
+            steps {
+                echo 'creating pr...'
             }
         }
     }
