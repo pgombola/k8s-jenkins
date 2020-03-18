@@ -29,7 +29,7 @@ pipeline {
                         def tenantBranch = 'tenant-'+params['Tenant Name']
                         echo "Creating branch ${tenantBranch}"
 
-                        def createJson = JsonOutput.toJson([ref: "ref/heads/${tenantBranch}", sha: "${GIT_COMMIT}"])
+                        def createJson = JsonOutput.toJson([ref: "refs/heads/${tenantBranch}", sha: "${GIT_COMMIT}"]).replace("\"", "\\\"")
                         sh "curl -s -o - -s -w \"\n%{http_code}\n\" -X POST -i -d ${createJson} https://api.github.com/repos/pgombola/k8s-jenkins/git/refs -u $USERNAME:$PASSWORD | tail -1 > createResult.txt"
                         def createResult = readFile('createResult.txt').trim()
                         echo "Create Result: ${createResult}"
