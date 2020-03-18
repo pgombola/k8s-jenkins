@@ -48,15 +48,14 @@ pipeline {
                 script {
                     def tenant = params['Tenant Name']
                     echo "Checking out ${tenant}..."
-                    sh 'git config --global credential.helper cache'
-                    sh 'git config --global push.default simple'
                     dir("tenant-${tenant}") {
                         git (
                             url: "${GIT_URL}",
                             credentialsId: 'pgombola-token',
                             branch: "tenant-${tenant}"
                         )
-                        sh "./create-tenant.sh acme && git add . && git commit -m \"Added tenant ${tenant}\""
+                        sh "./create-tenant.sh ${tenant}"
+                        sh "git add . && git commit -m \"Added tenant ${tenant}\" && git push origin tenant-${tenant}"
                     }
                 }
             }
