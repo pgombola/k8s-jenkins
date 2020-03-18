@@ -12,6 +12,7 @@ pipeline {
     }
     environment {
         GIT_CREDENTIAL_ID='pgombola-token'
+        GIT_URL_WITHOUT_HTTPS=GIT_URL.substring(url.indexOf(':'+1))
     }
 
     stages {
@@ -58,7 +59,7 @@ pipeline {
                         script {
                             env.encodedPass=URLEncoder.encode(PASS, "UTF-8")
                             DIR = "tenant-${tenant}"
-                            sh "git clone https://${USER}:${encodedPass}@${GIT_URL} ${DIR} -b tenant-${tenant}"
+                            sh "git clone https://${USER}:${encodedPass}@${GIT_URL_WITHOUT_HTTPS} ${DIR} -b tenant-${tenant}"
                             dir("${DIR}") {
                                 sh "./create-tenant.sh ${tenant}"
                                 sh 'git add .'
