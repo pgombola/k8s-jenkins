@@ -60,7 +60,7 @@ pipeline {
                                 branch: "${params['Tenant Name']}"
                             )
                             sh "ls"
-                        )
+                        }
                     }
                 }
 
