@@ -47,8 +47,22 @@ pipeline {
 
         stage("Configure tenant") {
             steps {
-                echo "Git url: ${GIT_URL}"
-                echo "Checking out ${params['Tenant Name']}..."
+                withCredentials([usernamePassword(
+                    credentialsId: 'pgombola-token',
+                    usernameVariable: 'USERNAME',
+                    passwordVariable: 'PASSWORD',)]) {
+                    script {
+                        echo "Checking out ${params['Tenant Name']}..."
+                        dir("tenant-${params['Tenant Name']}") {
+                            git (
+                                url: "${GIT_URL}",
+                                credentialsId: 'pgombola-token',
+                                branch: "${params['Tenant Name']}"
+                            )
+                            sh "ls"
+                        )
+                    }
+                }
 
             }
         }
