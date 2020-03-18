@@ -17,7 +17,7 @@ spec:
             - --memcached-service=
             - --ssh-keygen-dir=/var/fluxd/keygen
             - --git-branch=master
-            - --git-path=cluster/fluxcd,tenants/acme
+            - --git-path=cluster/fluxcd
             - --git-user=pgombola
             - --git-email=pgombola@users.noreply.github.com
             - --git-url=https://$(GIT_AUTHUSER):$(GIT_AUTHKEY)@github.com/pgombola/k8s-jenkins
