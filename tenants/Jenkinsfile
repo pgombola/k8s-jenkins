@@ -21,7 +21,7 @@ pipeline {
             steps {
                 script {
                     def tenantBranch = 'tenant-'+params['Tenant Name']
-                    echo 'Creating branch $tenantBranch'
+                    echo "Creating branch ${tenantBranch}"
                 }
 
             }
