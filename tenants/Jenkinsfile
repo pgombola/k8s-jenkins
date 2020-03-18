@@ -7,12 +7,13 @@ pipeline {
     }
     stages {
         stage("Validate parameters") {
-            when {
-                expression {
-                    params['Tenant Name'] == ''
+            steps {
+                script {
+                    if (params['Tenant Name'] == '') {
+                        error 'Invalid tenant name'
+                    }
                 }
             }
-            error 'Invalid tenant name'
         }
 
         stage("Create tenant branch") {
