@@ -78,7 +78,7 @@ pipeline {
         }
     }
     post {
-        cleanup {
+        always {
             if (fileExists("tenant-${params['Tenant Name']}")) {
                 dir ("tenant-${params['Tenant Name']}") {
                     deleteDir()
