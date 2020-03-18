@@ -1,3 +1,5 @@
+import groovy.json.JsonOutput
+
 pipeline {
     agent any
     parameters {
@@ -19,11 +21,25 @@ pipeline {
 
         stage("Create tenant branch") {
             steps {
-                script {
-                    def tenantBranch = 'tenant-'+params['Tenant Name']
-                    echo "Creating branch ${tenantBranch}"
-                }
+                withCredentials([usernamePassword(
+                    credentialsId: 'pgombola-token',
+                    usernameVariable: 'USERNAME',
+                    passwordVariable: 'PASSWORD',)]) {
+                    script {
+                        def tenantBranch = 'tenant-'+params['Tenant Name']
+                        echo "Creating branch ${tenantBranch}"
 
+                        def createJson = JsonOutput.toJson([ref: "ref/heads/${tenantBranch}", sha: "${GIT_COMMIT}"])
+                        sh "curl -s -o - -s -w \"\n%{http_code}\n\" -X POST -i -d ${createJson} https://api.github.com/repos/pgombola/k8s-jenkins/git/refs -u $USERNAME:$PASSWORD | tail -1 > createResult.txt"
+                        def createResult = readFile('createResult.txt').trim()
+                        echo "Create Result: ${createResult}"
+                        if (createResult.equals('201')) {
+                            echo "Created branch ${tenantBranch}"
+                        } else {
+                            error 'Error creating branch'
+                        }
+                    }
+                }
             }
         }
         stage("Configure tenant") {
