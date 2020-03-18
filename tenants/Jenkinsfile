@@ -28,14 +28,13 @@ pipeline {
                     script {
                         def tenantBranch = 'tenant-'+params['Tenant Name']
                         echo "Creating branch ${tenantBranch}"
-
-                        def createJson = JsonOutput.toJson([ref: "refs/heads/${tenantBranch}", sha: "${GIT_COMMIT}"]).replace("\"", "\\\"")
-                        sh "curl -s -o - -s -w \"\n%{http_code}\n\" -X POST -i -d ${createJson} https://api.github.com/repos/pgombola/k8s-jenkins/git/refs -u $USERNAME:$PASSWORD | tail -1 > createResult.txt"
-                        def createResult = readFile('createResult.txt').trim()
-                        echo "Create Result: ${createResult}"
-                        if (createResult.equals('201')) {
-                            echo "Created branch ${tenantBranch}"
-                        } else {
+                        def create = JsonOutput.toJson([ref: "refs/heads/${tenantBranch}", sha: "${GIT_COMMIT}"]).replace("\"", "\\\"")
+                        created = sh (
+                            script: "curl -s -o - -i -w \"%{http_code}\" -X POST -d ${create} https://api.github.com/repos/pgombola/k8s-jenkins/git/refs -u $USERNAME:$PASSWORD | tail -1",
+                            returnStdout: true
+                        ).trim() == '201'
+                        echo "Branch created: ${created}"
+                        if (!created) {
                             error 'Error creating branch'
                         }
                     }
