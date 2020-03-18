@@ -6,6 +6,15 @@ pipeline {
         choice(name: 'Environment', choices: ['prod', 'stage'], description: 'Environment to deploy tenant')
     }
     stages {
+        stage("Validate parameters") {
+            when {
+                expression {
+                    params['Tenant Name'] == ''
+                }
+            }
+            error 'Invalid tenant name'
+        }
+
         stage("Create tenant branch") {
             steps {
                 echo 'validating...'
