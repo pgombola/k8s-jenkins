@@ -54,7 +54,7 @@ pipeline {
             steps {
                 script {
                     def tenant = params['Tenant Name']
-                    echo "Checking out ${tenant}..."
+                    echo "Configuring ${tenant}..."
                     withCredentials([usernamePassword(
                         credentialsId: env.GIT_CREDENTIAL_ID,
                         usernameVariable: 'USER',
@@ -63,17 +63,18 @@ pipeline {
                             env.encodedPass=URLEncoder.encode(PASS, "UTF-8")
                             DIR = "tenant-${tenant}"
                             if (fileExists("${DIR}")) {
+                                echo 'Checkout exists in workspace, updating...'
                                 dir("${DIR}") {
                                     sh "git pull"
                                 }
                             } else {
                                 sh "git clone https://${USER}:${encodedPass}@${GIT_URL_WITHOUT_HTTPS} ${DIR} -b tenant-${tenant}"
-                            }
-                            dir("${DIR}") {
-                                bash "./create-tenant.sh ${tenant}"
-                                sh 'git add .'
-                                sh "git commit -m \"Added tenant ${tenant}\""
-                                sh 'git push'
+                                dir("${DIR}") {
+                                    bash "./create-tenant.sh ${tenant}"
+                                    sh 'git add .'
+                                    sh "git commit -m \"Added tenant ${tenant}\""
+                                    sh 'git push'
+                                }
                             }
                         }
                     }
