@@ -12,8 +12,11 @@ pipeline {
     }
     environment {
         GIT_CREDENTIAL_ID = 'pgombola-token'
+        GIT_OWNER = "pgombola"
+        GIT_REPO = "k8s-jenkins"
+
         GIT_URL_WITHOUT_HTTPS = "${GIT_URL}".substring("${GIT_URL}".indexOf('https://')+8)
-        GIT_API_URL = "https://api.github.com/repos/pgombola/k8s-jenkins"
+        GIT_API_URL = "https://api.github.com/repos/${OWNER}/${GIT_REPO}"
         TENANT = "${params['Tenant Name']}"
         TENANT_BRANCH = "tenant-${TENANT}"
     }
@@ -88,7 +91,7 @@ pipeline {
                     script {
                         def create = JsonOutput.toJson([title: "Configure ${TENANT}", head: "${TENANT_BRANCH}", base: "master"]).replace("\"", "\\\"")
                         resp = sh (
-                            script: "curl -s -o - -i -w \"%{http_code}\" -X POST -d ${create} ${GIT_API_URL}/pulls -u $USER:$PASS",
+                            script: "curl -s -o - -i -w \"%{http_code}\" -X POST -d \"{\"title\":\"Configure acme\",\"head\":\"tenant-acme\",\"base\":\"master\"}\" ${GIT_API_URL}/pulls -u $USER:$PASS",
                             returnStdout: true
                         ).trim()
                         echo "PR response: ${resp}"
@@ -106,9 +109,9 @@ pipeline {
     post {
         always {
             script {
-                if (fileExists("${TENANT}")) {
-                    dir ("tenant-${TENANT}") {
-                        sh "git push origin --delete \"tenant-${TENANT}\""
+                if (fileExists("${TENANT_BRANCH}")) {
+                    dir ("tenant-${TENANT_BRANCH}") {
+                        sh "git push origin --delete \"${TENANT_BRANCH}\""
                         deleteDir()
                     }
                 }
