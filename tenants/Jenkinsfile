@@ -44,9 +44,8 @@ pipeline {
                         ).trim()
                         if (resp == '201') {
                             echo 'Branch created.'
-                        } else if (resp == '422') {
-                            echo 'Branch previously created.'
                         } else {
+                            echo '*** Remove existing branch and provision again ***'
                             error "Unable to create branch! Status code: ${resp}"
                         }
                     }
@@ -65,21 +64,14 @@ pipeline {
                         script {
                             env.encodedPass=URLEncoder.encode(PASS, "UTF-8")
                             DIR = "tenant-${tenant}"
-                            if (fileExists("${DIR}")) {
-                                echo 'Checkout exists in workspace, updating...'
-                                dir("${DIR}") {
-                                    sh "git pull"
-                                }
-                            } else {
-                                sh "git clone https://${USER}:${encodedPass}@${GIT_URL_WITHOUT_HTTPS} ${DIR} -b tenant-${tenant}"
-                                dir("${DIR}") {
-                                    // Create tenant may need to be called in the case of updating an existing checkout.
-                                    // This script should be able to handle updates to existing tenant configs.
-                                    sh "./create-tenant.sh ${tenant}"
-                                    sh 'git add .'
-                                    sh "git commit -m \"Added tenant ${tenant}\""
-                                    sh 'git push'
-                                }
+                            sh "git clone https://${USER}:${encodedPass}@${GIT_URL_WITHOUT_HTTPS} ${DIR} -b tenant-${tenant}"
+                            dir("${DIR}") {
+                                // Create tenant may need to be called in the case of updating a tenant.
+                                // This script should be able to handle updates to existing tenant configs.
+                                sh "./create-tenant.sh ${tenant}"
+                                sh 'git add .'
+                                sh "git commit -m \"Added tenant ${tenant}\""
+                                sh 'git push'
                             }
                         }
                     }
@@ -99,6 +91,7 @@ pipeline {
                             script: "curl -s -o - -i -w \"%{http_code}\" -X POST -d ${create} ${GIT_API_URL}/pulls -u $USER:$PASS | tail -1",
                             returnStdout: true
                         ).trim()
+                        echo "PR response code: ${resp}"
                         if (resp == '201') {
                             echo 'PR created.'
                         } else {
@@ -111,11 +104,11 @@ pipeline {
         }
     }
     post {
-        success {
+        always {
             script {
-                if (fileExists("tenant-${params['Tenant Name']}")) {
-                    dir ("tenant-${params['Tenant Name']}") {
-                        sh "git push origin --delete \"tenant-${params['Tenant Name']}\""
+                if (fileExists("${TENANT}")) {
+                    dir ("tenant-${TENANT}") {
+                        sh "git push origin --delete \"tenant-${TENANT}\""
                         deleteDir()
                     }
                 }
