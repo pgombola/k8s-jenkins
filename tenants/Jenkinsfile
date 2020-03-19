@@ -35,13 +35,16 @@ pipeline {
                         def tenantBranch = 'tenant-'+params['Tenant Name']
                         echo "Creating branch ${tenantBranch}"
                         def create = JsonOutput.toJson([ref: "refs/heads/${tenantBranch}", sha: "${GIT_COMMIT}"]).replace("\"", "\\\"")
-                        created = sh (
+                        resp = sh (
                             script: "curl -s -o - -i -w \"%{http_code}\" -X POST -d ${create} https://api.github.com/repos/pgombola/k8s-jenkins/git/refs -u $USER:$PASS | tail -1",
                             returnStdout: true
-                        ).trim() == '201'
-                        echo "Branch created: ${created}"
-                        if (!created) {
-                            error 'Error creating branch'
+                        ).trim()
+                        if (resp == '201') {
+                            echo 'Branch created.'
+                        } else if (resp == '422') {
+                            echo 'Branch previously created.'
+                        } else {
+                            error "Unable to create branch! Status code: ${resp}"
                         }
                     }
                 }
@@ -59,7 +62,13 @@ pipeline {
                         script {
                             env.encodedPass=URLEncoder.encode(PASS, "UTF-8")
                             DIR = "tenant-${tenant}"
-                            sh "git clone https://${USER}:${encodedPass}@${GIT_URL_WITHOUT_HTTPS} ${DIR} -b tenant-${tenant}"
+                            if (fileExists("${DIR}")) {
+                                dir("${DIR}") {
+                                    sh "git pull"
+                                }
+                            } else {
+                                sh "git clone https://${USER}:${encodedPass}@${GIT_URL_WITHOUT_HTTPS} ${DIR} -b tenant-${tenant}"
+                            }
                             dir("${DIR}") {
                                 bash "./create-tenant.sh ${tenant}"
                                 sh 'git add .'
@@ -74,15 +83,18 @@ pipeline {
         stage("Create PR") {
             steps {
                 echo 'creating pr...'
+                input message: 'Approve PR', ok: 'Yes'
             }
         }
     }
     post {
         success {
-            if (fileExists("tenant-${params['Tenant Name']}")) {
-                dir ("tenant-${params['Tenant Name']}") {
-                    sh "git push origin --delete \"tenant-${params['Tenant Name']}\""
-                    deleteDir()
+            script {
+                if (fileExists("tenant-${params['Tenant Name']}")) {
+                    dir ("tenant-${params['Tenant Name']}") {
+                        sh "git push origin --delete \"tenant-${params['Tenant Name']}\""
+                        deleteDir()
+                    }
                 }
             }
         }
