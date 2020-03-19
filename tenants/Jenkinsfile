@@ -13,7 +13,7 @@ pipeline {
     environment {
         GIT_CREDENTIAL_ID = 'pgombola-token'
         GIT_URL_WITHOUT_HTTPS = "${GIT_URL}".substring("${GIT_URL}".indexOf('https://')+8)
-        GIT_API_URL = "https://api.github.com/repos/pgombola/k8s-jekins"
+        GIT_API_URL = "https://api.github.com/repos/pgombola/k8s-jenkins"
         TENANT = "${params['Tenant Name']}"
         TENANT_BRANCH = "tenant-${TENANT}"
     }
