@@ -41,6 +41,7 @@ pipeline {
                         def tenantBranch = 'tenant-'+params['Tenant Name']
                         echo "Creating branch ${tenantBranch}"
                         def create = JsonOutput.toJson([ref: "refs/heads/${tenantBranch}", sha: "${GIT_COMMIT}"]).replace("\"", "\\\"")
+                        echo "${create}"
                         resp = sh (
                             script: "curl -s -o - -i -w \"%{http_code}\" -X POST -d ${create} ${GIT_API_URL}/git/refs -u $USER:$PASS | tail -1",
                             returnStdout: true
@@ -92,7 +93,7 @@ pipeline {
                         def create = JsonOutput.toJson([title: "Configure ${TENANT}", head: "${TENANT_BRANCH}", base: "master"]).replace("\"", "\\\"")
                         echo "${create}"
                         resp = sh (
-                            script: "curl -s -o - -i -w \"%{http_code}\" -X POST -d \"{\\\"title\\\":\\\"Configure acme\\\",\\\"head\\\":\\\"tenant-acme\\\",\\\"base\\\":\\\"master\\\"}\\\" ${GIT_API_URL}/pulls -u $USER:$PASS",
+                            script: "curl -s -o - -i -w \"%{http_code}\" -X POST -d ${create} ${GIT_API_URL}/pulls -u $USER:$PASS",
                             returnStdout: true
                         ).trim()
                         echo "PR response: ${resp}"
@@ -111,7 +112,7 @@ pipeline {
         always {
             script {
                 if (fileExists("${TENANT_BRANCH}")) {
-                    dir ("tenant-${TENANT_BRANCH}") {
+                    dir ("${TENANT_BRANCH}") {
                         sh "git push origin --delete \"${TENANT_BRANCH}\""
                         deleteDir()
                     }
