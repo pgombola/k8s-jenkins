@@ -90,8 +90,9 @@ pipeline {
                     passwordVariable: 'PASS',)]) {
                     script {
                         def create = JsonOutput.toJson([title: "Configure ${TENANT}", head: "${TENANT_BRANCH}", base: "master"]).replace("\"", "\\\"")
+                        echo "${create}"
                         resp = sh (
-                            script: "curl -s -o - -i -w \"%{http_code}\" -X POST -d \"{\"title\":\"Configure acme\",\"head\":\"tenant-acme\",\"base\":\"master\"}\" ${GIT_API_URL}/pulls -u $USER:$PASS",
+                            script: "curl -s -o - -i -w \"%{http_code}\" -X POST -d \"{\\\"title\\\":\\\"Configure acme\\\",\\\"head\\\":\\\"tenant-acme\\\",\\\"base\\\":\\\"master\\\"}\\\" ${GIT_API_URL}/pulls -u $USER:$PASS",
                             returnStdout: true
                         ).trim()
                         echo "PR response: ${resp}"
