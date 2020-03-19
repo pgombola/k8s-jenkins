@@ -73,7 +73,9 @@ pipeline {
                             } else {
                                 sh "git clone https://${USER}:${encodedPass}@${GIT_URL_WITHOUT_HTTPS} ${DIR} -b tenant-${tenant}"
                                 dir("${DIR}") {
-                                    bash "./create-tenant.sh ${tenant}"
+                                    // Create tenant may need to be called in the case of updating an existing checkout.
+                                    // This script should be able to handle updates to existing tenant configs.
+                                    sh "./create-tenant.sh ${tenant}"
                                     sh 'git add .'
                                     sh "git commit -m \"Added tenant ${tenant}\""
                                     sh 'git push'
