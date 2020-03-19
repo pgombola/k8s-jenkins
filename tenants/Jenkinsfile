@@ -11,8 +11,11 @@ pipeline {
         choice(name: 'Environment', choices: ['prod', 'stage'], description: 'Environment to deploy tenant')
     }
     environment {
-        GIT_CREDENTIAL_ID='pgombola-token'
-        GIT_URL_WITHOUT_HTTPS="${GIT_URL}".substring("${GIT_URL}".indexOf('https://')+8)
+        GIT_CREDENTIAL_ID = 'pgombola-token'
+        GIT_URL_WITHOUT_HTTPS = "${GIT_URL}".substring("${GIT_URL}".indexOf('https://')+8)
+        GIT_API_URL = "https://api.github.com/repos/pgombola/k8s-jekins"
+        TENANT = "${params['Tenant Name']}"
+        TENANT_BRANCH = "tenant-${TENANT}"
     }
 
     stages {
@@ -36,7 +39,7 @@ pipeline {
                         echo "Creating branch ${tenantBranch}"
                         def create = JsonOutput.toJson([ref: "refs/heads/${tenantBranch}", sha: "${GIT_COMMIT}"]).replace("\"", "\\\"")
                         resp = sh (
-                            script: "curl -s -o - -i -w \"%{http_code}\" -X POST -d ${create} https://api.github.com/repos/pgombola/k8s-jenkins/git/refs -u $USER:$PASS | tail -1",
+                            script: "curl -s -o - -i -w \"%{http_code}\" -X POST -d ${create} ${GIT_API_URL}/git/refs -u $USER:$PASS | tail -1",
                             returnStdout: true
                         ).trim()
                         if (resp == '201') {
@@ -81,9 +84,26 @@ pipeline {
                 }
             }
         }
-        stage("Create PR") {
+        stage("Approval") {
             steps {
-                echo 'creating pr...'
+                echo "creating pr for branch ${TENANT_BRANCH}..."
+                withCredentials([usernamePassword(
+                    credentialsId: env.GIT_CREDENTIAL_ID,
+                    usernameVariable: 'USER',
+                    passwordVariable: 'PASS',)]) {
+                    script {
+                        def create = JsonOutput.toJson([title: "Configure ${TENANT}", head: "${TENANT_BRANCH}", base: "master"]).replace("\"", "\\\"")
+                        resp = sh (
+                            script: "curl -s -o - -i -w \"%{http_code}\" -X POST -d ${create} ${GIT_API_URL}/pulls -u $USER:$PASS | tail -1",
+                            returnStdout: true
+                        ).trim()
+                        if (resp == '201') {
+                            echo 'PR created.'
+                        } else {
+                            error 'Unable to create PR!'
+                        }
+                    }
+                }
                 input message: 'Approve PR', ok: 'Yes'
             }
         }
