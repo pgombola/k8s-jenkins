@@ -90,21 +90,19 @@ pipeline {
                     usernameVariable: 'USER',
                     passwordVariable: 'PASS',)]) {
                     script {
-                        def create = JsonOutput.toJson([title: "Configure ${TENANT}", head: "${TENANT_BRANCH}", base: "master"]).replace("\"", "\\\"")
-                        echo "${create}"
+                        def create = JsonOutput.toJson([title: "Configure-${TENANT}", head: "${TENANT_BRANCH}", base: "master"]).replace("\"", "\\\"")
                         resp = sh (
                             script: "curl -s -o - -i -w \"%{http_code}\" -X POST -d ${create} ${GIT_API_URL}/pulls -u $USER:$PASS",
                             returnStdout: true
                         ).trim()
-                        echo "PR response: ${resp}"
-                        // if (resp == '201') {
-                        //     echo 'PR created.'
-                        // } else {
-                        //     error 'Unable to create PR!'
-                        // }
+                        if (resp == '201') {
+                            echo 'PR created.'
+                        } else {
+                            error 'Unable to create PR!'
+                        }
+                        input message: 'Approve PR', ok: 'Yes'
                     }
                 }
-                input message: 'Approve PR', ok: 'Yes'
             }
         }
     }
@@ -112,7 +110,7 @@ pipeline {
         always {
             script {
                 if (fileExists("${TENANT_BRANCH}")) {
-                    dir ("${TENANT_BRANCH}") {
+                    dir ("tenant-${TENANT_BRANCH}") {
                         sh "git push origin --delete \"${TENANT_BRANCH}\""
                         deleteDir()
                     }
