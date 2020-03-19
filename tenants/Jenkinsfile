@@ -78,9 +78,10 @@ pipeline {
         }
     }
     post {
-        always {
+        success {
             if (fileExists("tenant-${params['Tenant Name']}")) {
                 dir ("tenant-${params['Tenant Name']}") {
+                    sh "git push origin --delete \"tenant-${params['Tenant Name']}\""
                     deleteDir()
                 }
             }
