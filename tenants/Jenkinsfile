@@ -100,7 +100,8 @@ pipeline {
                         } else {
                             error 'Unable to create PR!'
                         }
-                        input message: 'Approve PR', ok: 'Yes'
+                        input message: 'Approve PR', ok: 'Yes', submitterParameter: "APPROVER"
+                        echo "This is the approver returned: ${APPROVER}"
                     }
                 }
             }
