@@ -111,7 +111,7 @@ pipeline {
         always {
             script {
                 if (fileExists("${TENANT_BRANCH}")) {
-                    dir ("tenant-${TENANT_BRANCH}") {
+                    dir ("${TENANT_BRANCH}") {
                         sh "git push origin --delete \"${TENANT_BRANCH}\""
                         deleteDir()
                     }
