@@ -88,15 +88,15 @@ pipeline {
                     script {
                         def create = JsonOutput.toJson([title: "Configure ${TENANT}", head: "${TENANT_BRANCH}", base: "master"]).replace("\"", "\\\"")
                         resp = sh (
-                            script: "curl -s -o - -i -w \"%{http_code}\" -X POST -d ${create} ${GIT_API_URL}/pulls -u $USER:$PASS | tail -1",
+                            script: "curl -s -o - -i -w \"%{http_code}\" -X POST -d ${create} ${GIT_API_URL}/pulls -u $USER:$PASS",
                             returnStdout: true
                         ).trim()
-                        echo "PR response code: ${resp}"
-                        if (resp == '201') {
-                            echo 'PR created.'
-                        } else {
-                            error 'Unable to create PR!'
-                        }
+                        echo "PR response: ${resp}"
+                        // if (resp == '201') {
+                        //     echo 'PR created.'
+                        // } else {
+                        //     error 'Unable to create PR!'
+                        // }
                     }
                 }
                 input message: 'Approve PR', ok: 'Yes'
