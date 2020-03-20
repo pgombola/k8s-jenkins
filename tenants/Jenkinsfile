@@ -1,4 +1,5 @@
 import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
 
 pipeline {
     agent any
@@ -16,7 +17,7 @@ pipeline {
         GIT_REPO = "k8s-jenkins"
 
         GIT_URL_WITHOUT_HTTPS = "${GIT_URL}".substring("${GIT_URL}".indexOf('https://')+8)
-        GIT_API_URL = "https://api.github.com/repos/${GIT_OWNER}/${GIT_REPO}"
+        GITHUB_API_URL = "https://api.github.com/repos/${GIT_OWNER}/${GIT_REPO}"
         TENANT = "${params['Tenant Name']}"
         TENANT_BRANCH = "tenant-${TENANT}"
     }
@@ -43,7 +44,7 @@ pipeline {
                         def create = JsonOutput.toJson([ref: "refs/heads/${tenantBranch}", sha: "${GIT_COMMIT}"]).replace("\"", "\\\"")
                         echo "${create}"
                         resp = sh (
-                            script: "curl -s -o - -i -w \"%{http_code}\" -X POST -d ${create} ${GIT_API_URL}/git/refs -u $USER:$PASS | tail -1",
+                            script: "curl -s -o - -i -w \"%{http_code}\" -X POST -d ${create} ${GITHUB_API_URL}/git/refs -u $USER:$PASS | tail -1",
                             returnStdout: true
                         ).trim()
                         if (resp == '201') {
@@ -85,6 +86,7 @@ pipeline {
         stage("Approval") {
             steps {
                 echo "creating pr for branch ${TENANT_BRANCH}..."
+                def PR_ID = null
                 withCredentials([usernamePassword(
                     credentialsId: env.GIT_CREDENTIAL_ID,
                     usernameVariable: 'USER',
@@ -92,10 +94,12 @@ pipeline {
                     script {
                         def create = JsonOutput.toJson([title: "Configure-${TENANT}", head: "${TENANT_BRANCH}", base: "master"]).replace("\"", "\\\"")
                         resp = sh (
-                            script: "curl -s -o - -i -w \"%{http_code}\" -X POST -d ${create} ${GIT_API_URL}/pulls -u $USER:$PASS | tail -1",
+                            script: "curl -s -o - -i -w \"%{http_code}\" -X POST -d ${create} ${GITHUB_API_URL}/pulls -u $USER:$PASS",
                             returnStdout: true
                         ).trim()
-                        if (resp == '201') {
+                        json = new JsonSlurper().parseText(resp)
+                        PR_ID = json.number
+                        if (PR_ID != null) {
                             echo 'PR created.'
                         } else {
                             echo "PR response: ${resp}"
@@ -111,7 +115,11 @@ pipeline {
                             password(defaultValue: '', description: 'GitHub password', name: 'GHPASS')
                         ],
                         submitterParameter: 'USER'
-                    echo "gh user: ${approval['GHUSER']}"
+                    def merge = JsonOutput.toJson([commit_title:"Merge ${TENANT} configuration."])
+                    resp = sh (
+                        script: "curl -s -o - -i -w \"%{http_code}\" -X PUT -d ${merge} ${GITHUB_API_URL}/pulls/${PR_ID}/merge -u ${approval['GHUSER']}:${approval['GHPASS']} | tail -1",
+                        returnStdout: true
+                    ).trim()
                 }
             }
         }
