@@ -101,9 +101,17 @@ pipeline {
                             echo "PR response: ${resp}"
                             error 'Unable to create PR!'
                         }
-                        input message: 'Approve PR', ok: 'Yes', submitterParameter: "APPROVER"
-                        echo "This is the approver returned: ${APPROVER}"
                     }
+                }
+                script {
+                    def approval = input message: 'Approve PR',
+                        ok: 'Yes',
+                        parameters: [
+                            string(defaultValue: '',  description: 'GitHub username', name: 'GHUSER'
+                            password(defaultValue: '', description: 'GitHub password', name: 'GHPASS')
+                        ],
+                        submitterParameter: 'USER'
+                    echo "gh user: ${approval['GHUSER']}"
                 }
             }
         }
