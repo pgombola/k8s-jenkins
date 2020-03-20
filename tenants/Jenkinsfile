@@ -106,26 +106,19 @@ pipeline {
                             echo "PR response: ${resp}"
                             error 'Unable to create PR!'
                         }
-                    }
-                }
-                script {
-                    echo 'Waiting for approval...'
-                    def approval = input message: 'Approve PR',
-                        ok: 'Yes',
-                        parameters: [
-                            string(defaultValue: '',  description: 'GitHub username', name: 'GHUSER'),
-                            password(defaultValue: '', description: 'GitHub password', name: 'GHPASS')
-                        ],
-                        submitterParameter: 'USER'
-                    // Should add the sha of the commit from configure stage to this merge request
-                    def merge = JsonOutput.toJson([commit_title:"Merge ${TENANT} configuration."])
-                    def pass = "${approval['GHPASS']}"
-                    wrap([$class: 'MaskPasswordsBuildWrapper', varPasswordPairs:[[password: '${pass}', var: 'GHSECRET']]]) {
+
+                        echo 'Waiting for approval...'
+                        def approval = input message: 'Approve PR',
+                            ok: 'Yes',
+                            submitterParameter: 'USER'
+                        def comment = JsonOutput.toJson([body: "Approved by ${approval['USER']}"]).replace("\"", "\\\"")
+                        sh "curl -s -o - -X POST -d ${comment} ${GITHUB_API_URL}/issues/${PR_ID}/comments -u $USER:$PASS"
+                        // Should add the sha of the commit from configure stage to this merge request
+                        def merge = JsonOutput.toJson([commit_title:"Merge ${TENANT} configuration."])
                         resp = sh (
-                            script: "curl -s -o - -X PUT -d ${merge} ${GITHUB_API_URL}/pulls/${PR_ID}/merge -u ${approval['GHUSER']}:${approval['GHPASS']}",
+                            script: "curl -s -o - -X PUT -d ${merge} ${GITHUB_API_URL}/pulls/${PR_ID}/merge -u $USER:$PASS",
                             returnStdout: true
                         ).trim()
-                        echo "${resp}"
                         respObj = readJSON text: "${resp}"
                         if (respObj.merged) {
                             echo 'Merge to master successful'
