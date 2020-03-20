@@ -119,11 +119,13 @@ pipeline {
                         submitterParameter: 'USER'
                     // Should add the sha of the commit from configure stage to this merge request
                     def merge = JsonOutput.toJson([commit_title:"Merge ${TENANT} configuration."])
-                    wrap([$class: 'MaskPasswordsBuildWrapper', varPasswordPairs:[[password: "${approval['GHPASS']}", var: 'GHSECRET']]]) {
+                    def pass = "${approval['GHPASS']}"
+                    wrap([$class: 'MaskPasswordsBuildWrapper', varPasswordPairs:[[password: '${pass}', var: 'GHSECRET']]]) {
                         resp = sh (
-                            script: "curl -s -o - -i -w \"%{http_code}\" -X PUT -d ${merge} ${GITHUB_API_URL}/pulls/${PR_ID}/merge -u ${approval['GHUSER']}:${approval['GHPASS']}",
+                            script: "curl -s -o - -X PUT -d ${merge} ${GITHUB_API_URL}/pulls/${PR_ID}/merge -u ${approval['GHUSER']}:${approval['GHPASS']}",
                             returnStdout: true
                         ).trim()
+                        echo "${resp}"
                         respObj = readJSON text: "${resp}"
                         if (respObj.merged) {
                             echo 'Merge to master successful'
