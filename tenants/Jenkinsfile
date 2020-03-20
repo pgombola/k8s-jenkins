@@ -86,7 +86,7 @@ pipeline {
         stage("Approval") {
             steps {
                 echo "creating pr for branch ${TENANT_BRANCH}..."
-                def PR_ID = null
+                PR_ID = null
                 withCredentials([usernamePassword(
                     credentialsId: env.GIT_CREDENTIAL_ID,
                     usernameVariable: 'USER',
