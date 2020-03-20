@@ -86,12 +86,12 @@ pipeline {
         stage("Approval") {
             steps {
                 echo "creating pr for branch ${TENANT_BRANCH}..."
-                PR_ID = null
-                withCredentials([usernamePassword(
-                    credentialsId: env.GIT_CREDENTIAL_ID,
-                    usernameVariable: 'USER',
-                    passwordVariable: 'PASS',)]) {
-                    script {
+                script {
+                    def PR_ID = null
+                    withCredentials([usernamePassword(
+                        credentialsId: env.GIT_CREDENTIAL_ID,
+                        usernameVariable: 'USER',
+                        passwordVariable: 'PASS',)]) {
                         def create = JsonOutput.toJson([title: "Configure-${TENANT}", head: "${TENANT_BRANCH}", base: "master"]).replace("\"", "\\\"")
                         resp = sh (
                             script: "curl -s -o - -i -w \"%{http_code}\" -X POST -d ${create} ${GITHUB_API_URL}/pulls -u $USER:$PASS",
@@ -106,8 +106,6 @@ pipeline {
                             error 'Unable to create PR!'
                         }
                     }
-                }
-                script {
                     def approval = input message: 'Approve PR',
                         ok: 'Yes',
                         parameters: [
