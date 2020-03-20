@@ -1,5 +1,6 @@
 import groovy.json.JsonOutput
-import groovy.json.JsonSlurper
+
+PR_ID=null
 
 pipeline {
     agent any
@@ -51,6 +52,7 @@ pipeline {
                             echo 'Branch created.'
                         } else {
                             echo '*** Remove existing branch and provision again ***'
+                            echo '*** This run may have removed in post cleanup  ***'
                             error "Unable to create branch! Status code: ${resp}"
                         }
                     }
@@ -86,19 +88,18 @@ pipeline {
         stage("Approval") {
             steps {
                 echo "creating pr for branch ${TENANT_BRANCH}..."
-                script {
-                    def PR_ID = null
-                    withCredentials([usernamePassword(
-                        credentialsId: env.GIT_CREDENTIAL_ID,
-                        usernameVariable: 'USER',
-                        passwordVariable: 'PASS',)]) {
+                withCredentials([usernamePassword(
+                    credentialsId: env.GIT_CREDENTIAL_ID,
+                    usernameVariable: 'USER',
+                    passwordVariable: 'PASS',)]) {
+                    script {
                         def create = JsonOutput.toJson([title: "Configure-${TENANT}", head: "${TENANT_BRANCH}", base: "master"]).replace("\"", "\\\"")
                         resp = sh (
-                            script: "curl -s -o - -i -w \"%{http_code}\" -X POST -d ${create} ${GITHUB_API_URL}/pulls -u $USER:$PASS",
+                            script: "curl -s -o - -X POST -d ${create} ${GITHUB_API_URL}/pulls -u $USER:$PASS",
                             returnStdout: true
                         ).trim()
-                        json = new JsonSlurper().parseText(resp)
-                        PR_ID = json.number
+                        respObj = readJson text: "${resp}"
+                        PR_ID = respObj.number
                         if (PR_ID != null) {
                             echo 'PR created.'
                         } else {
@@ -106,6 +107,9 @@ pipeline {
                             error 'Unable to create PR!'
                         }
                     }
+                }
+                script {
+                    echo 'Waiting for approval...'
                     def approval = input message: 'Approve PR',
                         ok: 'Yes',
                         parameters: [
