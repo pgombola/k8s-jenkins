@@ -107,7 +107,7 @@ pipeline {
                     def approval = input message: 'Approve PR',
                         ok: 'Yes',
                         parameters: [
-                            string(defaultValue: '',  description: 'GitHub username', name: 'GHUSER'
+                            string(defaultValue: '',  description: 'GitHub username', name: 'GHUSER'),
                             password(defaultValue: '', description: 'GitHub password', name: 'GHPASS')
                         ],
                         submitterParameter: 'USER'
